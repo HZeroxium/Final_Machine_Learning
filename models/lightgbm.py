@@ -3,6 +3,7 @@
 from models.base import ModelTrainer
 from models.tree import DecisionTreeRegressor
 import numpy as np
+import json
 
 
 class LightGBMModel(ModelTrainer):
@@ -58,3 +59,43 @@ class LightGBMModel(ModelTrainer):
         for tree, weight in zip(self.trees, self.tree_weights):
             predictions += weight * tree.predict(X)
         return np.round(predictions)
+
+    def save_model_weights(self, filepath):
+        """Save model weights, trees, and parameters to a file."""
+        model_data = {
+            "trees": [tree.tree for tree in self.trees],
+            "tree_weights": self.tree_weights,
+            "params": {
+                "n_estimators": self.n_estimators,
+                "learning_rate": self.learning_rate,
+                "max_depth": self.max_depth,
+                "lambda_l1": self.lambda_l1,
+                "lambda_l2": self.lambda_l2,
+            },
+        }
+        with open(filepath, "w") as f:
+            json.dump(model_data, f)
+        self.log(f"Model weights saved to {filepath}")
+
+    def load_model_weights(self, filepath):
+        """Load model weights, trees, and parameters from a file."""
+        with open(filepath, "r") as f:
+            model_data = json.load(f)
+
+        # Restore parameters
+        params = model_data["params"]
+        self.n_estimators = params["n_estimators"]
+        self.learning_rate = params["learning_rate"]
+        self.max_depth = params["max_depth"]
+        self.lambda_l1 = params["lambda_l1"]
+        self.lambda_l2 = params["lambda_l2"]
+
+        # Restore trees and weights
+        self.trees = [
+            DecisionTreeRegressor(max_depth=self.max_depth) for _ in model_data["trees"]
+        ]
+        for tree, tree_data in zip(self.trees, model_data["trees"]):
+            tree.tree = tree_data
+
+        self.tree_weights = model_data["tree_weights"]
+        self.log(f"Model weights loaded from {filepath}")

@@ -192,6 +192,8 @@ def random_forest_hyperparameter_tuning(
     )
     best_model.train(X_train, y_train)
 
+    best_model.save_model_weights("weights_random_forest_best.json")
+
     logging.info("Hyperparameter tuning completed.")
     logging.info(
         f"Best parameters: {best_params}, Best Validation Accuracy: {best_val_acc:.4f}"

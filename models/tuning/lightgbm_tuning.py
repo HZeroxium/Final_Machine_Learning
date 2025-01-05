@@ -194,6 +194,7 @@ def lightgbm_hyperparameter_tuning(
         verbose=False,
     )
     best_model.train(X_train, y_train)
+    best_model.save_model_weights("weights_lightgbm_best.json")
 
     logging.info("Hyperparameter tuning completed.")
     logging.info(
